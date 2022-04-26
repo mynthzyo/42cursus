@@ -1,0 +1,44 @@
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: avilchez <avilchez@student.42.fr>          +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2022/03/05 18:59:16 by avilchez          #+#    #+#              #
+#    Updated: 2022/04/19 16:01:34 by avilchez         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+SRC = *.c
+
+OBJ = $(SRC:.c=.o)
+
+NAME = libft.a
+
+FLAGS = -Wall -Wextra -Werror -g -fsanitize=address
+
+RM = rm -f
+
+CC = gcc -c
+
+AR = ar crs
+
+$(NAME):
+	$(CC) $(FLAGS) $(SRC)
+	$(AR) $(NAME) $(OBJ)
+
+all: $(NAME)
+
+clean:
+	$(RM) $(OBJ)
+
+fclean: clean
+	$(RM) $(NAME)
+
+re: fclean all
+
+norminette:
+	Norminette -R CheckForbiddenSourceHeader
+
+.PHONY: all, clean, fclean, re
