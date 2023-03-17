@@ -1,0 +1,126 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   errors.c                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: avilchez <avilchez@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/11/18 17:33:01 by avilchez          #+#    #+#             */
+/*   Updated: 2022/12/02 12:55:24 by avilchez         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../includes/so_long.h"
+
+static void	count_checker(t_complete *game, int height, int width)
+{
+	if (game->map[height][width] != '1' &&
+		game->map[height][width] != '0' &&
+		game->map[height][width] != 'P' &&
+		game->map[height][width] != 'E' &&
+		game->map[height][width] != 'C' &&
+		game->map[height][width] != '\n')
+	{
+		show_exit(game, "There is an invalid element in the map\n");
+	}
+	if (game->map[height][width] == 'C')
+			game->itemcount++;
+	if (game->map[height][width] == 'P')
+			game->playercount++;
+	if (game->map[height][width] == 'E')
+			game->exitcount++;
+}
+
+void	character_valid(t_complete *game)
+{
+	int	height;
+	int	width;
+
+	height = 0;
+	while (height < game->heightmap - 1)
+	{
+		width = 0;
+		while (width <= game->widthmap)
+		{
+			count_checker(game, height, width);
+			width++;
+		}
+		height++;
+	}
+	if (game->playercount != 1)
+		show_exit(game, "This game is not a multiplayer game\n");
+	if (game->itemcount < 1)
+		show_exit(game, "Not enought items to collect\n");
+	if (game->exitcount != 1)
+		show_exit(game, "Number of exits incorrect\n");
+}
+
+int	checkifgood(char c)
+{
+	if (c != '0' && c != '1' && c != 'P' && c != 'E' && c != 'C')
+		return (0);
+	return (1);
+}
+
+int	checkaround(int mapx, int mapy, t_complete *game)
+{
+	if (checkifgood(game->map[mapy + 1][mapx]) == 0)
+		return (0);
+	if (checkifgood(game->map[mapy - 1][mapx]) == 0)
+		return (0);
+	if (checkifgood(game->map[mapy][mapx + 1]) == 0)
+		return (0);
+	if (checkifgood(game->map[mapy][mapx - 1]) == 0)
+		return (0);
+	return (1);
+}
+
+void	floodandfill2(t_complete *game, int mapy, int mapx)
+{
+	if (game->map[mapy][mapx] == 'E')
+		game->exitcount++;
+	if (game->map[mapy][mapx] == 'C')
+		game->collectables++;
+}
+
+int	floodandfill(t_complete *game, int mapy, int mapx)
+{
+	if (game->map[mapy][mapx] == '0' || game->map[mapy][mapx] == '1' ||
+	game->map[mapy][mapx] == 'C' || game->map[mapy][mapx] == 'P'
+	|| game->map[mapy][mapx] == 'E')
+	{
+		if (checkaround(mapx, mapy, game) == 0)
+			show_exit(game, "Map is not surrounded/closed by wall");
+		floodandfill2(game, mapy, mapx);
+		floodandfill(game, mapy, mapx + 1);
+		floodandfill(game, mapy, mapx - 1);
+		floodandfill(game, mapy + 1, mapx);
+		floodandfill(game, mapy - 1, mapx);
+	}
+	return (1);
+}
+
+int	checkthewall(t_complete *game)
+{
+	int	mapx;
+	int	mapy;
+
+	mapy = (int)game->player_h;
+	mapx = (int)game->player_w;
+	game->exitcount = 0;
+	floodandfill(game, mapx, mapy + 1);
+	floodandfill(game, mapx, mapy - 1);
+	floodandfill(game, mapx + 1, mapy);
+	floodandfill(game, mapx, mapy - 1);
+	if (game->collectables != game->itemcount)
+		show_exit(game, "Some collectible are out of the map");
+	if (game->exitcount == 0)
+		show_exit(game, "Exit is out of the map");
+	return (0);
+}
+
+void	check_errors(t_complete *game)
+{
+	character_valid(game);
+	checkthewall(game);
+}
